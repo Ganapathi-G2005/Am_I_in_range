@@ -206,11 +206,11 @@ function onGpsError(err) {
 
   if (err.code === err.PERMISSION_DENIED) {
     UI.gpsOverlay.hidden = false;
-    setStatus('unknown', '🚫', 'Location access denied');
+    setStatus('unknown', '\uD83D\uDEAB', 'Location access denied');
   } else if (err.code === err.TIMEOUT) {
-    setStatus('acquiring', '⏳', 'GPS signal weak — retrying…');
+    setStatus('acquiring', '\u23F3', 'GPS signal weak \u2014 retrying\u2026');
   } else {
-    setStatus('unknown', '⚠️', 'GPS unavailable');
+    setStatus('unknown', '\u26A0\uFE0F', 'GPS unavailable');
   }
 }
 
@@ -555,6 +555,35 @@ function bindEvents() {
     if (state.isDrawing) cancelDrawMode();
     else startDrawMode();
   });
+
+  // GPS retry button — re-fires the native permission prompt
+  let gpsRetryAttempts = 0;
+  document.getElementById('gpsRetryBtn').addEventListener('click', () => {
+    gpsRetryAttempts++;
+    setStatus('acquiring', '\u23F3', 'Requesting GPS\u2026');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        UI.gpsOverlay.hidden = true;
+        document.getElementById('gpsHint').hidden = true;
+        gpsRetryAttempts = 0;
+        onGpsSuccess(pos);
+        // Restart the watch
+        if (state.gpsWatchId !== null) navigator.geolocation.clearWatch(state.gpsWatchId);
+        state.gpsWatchId = navigator.geolocation.watchPosition(onGpsSuccess, onGpsError, {
+          enableHighAccuracy: true, timeout: 15000, maximumAge: 0,
+        });
+      },
+      (err) => {
+        // Show the hint after the first failed retry
+        if (gpsRetryAttempts >= 1) {
+          document.getElementById('gpsHint').hidden = false;
+        }
+        onGpsError(err);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  });
+
 
   UI.btnClose.addEventListener('click', closePolygon);
 

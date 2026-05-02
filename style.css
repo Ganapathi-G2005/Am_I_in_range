@@ -657,15 +657,18 @@ html, body {
   line-height: 1.6;
   margin-bottom: 20px;
 }
-.gps-overlay__steps {
-  text-align: left;
+.gps-overlay__hint {
+  margin-top: 16px;
+  font-size: 12px;
   color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.8;
-  padding-left: 18px;
-  margin-bottom: 24px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: rgba(99,179,237,0.07);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: left;
 }
-.gps-overlay__steps strong { color: var(--text-primary); }
+.gps-overlay__hint strong { color: var(--text-primary); }
 
 .gps-overlay__reload {
   display: inline-flex;

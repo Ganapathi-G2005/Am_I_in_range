@@ -216,18 +216,16 @@
   <div id="gpsOverlay" class="gps-overlay" hidden>
     <div class="gps-overlay__card">
       <div class="gps-overlay__icon">🛰️</div>
-      <h2 class="gps-overlay__title">Location Access Required</h2>
+      <h2 class="gps-overlay__title">Allow Location Access</h2>
       <p class="gps-overlay__desc">
-        This tool requires GPS to verify your field position. Please allow location access in your browser settings and
-        reload the page.
+        This tool needs your GPS location to verify your field position.
+        Tap below and allow when your browser asks.
       </p>
-      <ol class="gps-overlay__steps">
-        <li>Tap the <strong>🔒 lock icon</strong> in your browser's address bar</li>
-        <li>Select <strong>Site settings</strong></li>
-        <li>Set <strong>Location → Allow</strong></li>
-        <li>Reload this page</li>
-      </ol>
-      <button onclick="location.reload()" class="gps-overlay__reload">Reload Page</button>
+      <button id="gpsRetryBtn" class="gps-overlay__reload">📍 Allow Location</button>
+      <p class="gps-overlay__hint" id="gpsHint" hidden>
+        No prompt? Tap the 🔒 in the address bar → <strong>Site settings</strong> → set <strong>Location →
+          Allow</strong>, then tap Allow Location again.
+      </p>
     </div>
   </div>
 
