@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description"
+    content="Census 2027 HLB Field Verifier — GPS-based location verification tool for House Listing Officers conducting on-ground surveys in Andhra Pradesh." />
+  <meta name="theme-color" content="#0a0f1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>HLB Field Verifier — Census 2027</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet Draw CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════
+       TOP BAR
+  ══════════════════════════════════════ -->
+  <header id="topBar" class="top-bar">
+    <div class="top-bar__left">
+      <div class="census-logo">
+        <div class="census-logo__emblem">
+          <div class="emblem-ring"></div>
+          <div class="emblem-dot"></div>
+        </div>
+        <div class="census-logo__text">
+          <span class="logo-label">CENSUS 2027</span>
+          <span class="logo-sub">OFFICE OF THE REGISTRAR GENERAL</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-bar__center">
+      <div class="hlb-id-badge">
+        <span class="hlb-id-badge__label">HLB</span>
+        <span class="hlb-id-badge__number">0050</span>
+      </div>
+      <!-- Status Banner -->
+      <div id="statusBanner" class="status-banner status--unknown">
+        <span class="status-banner__icon" id="statusIcon">◌</span>
+        <span class="status-banner__text" id="statusText">Acquiring GPS…</span>
+      </div>
+    </div>
+
+    <div class="top-bar__right">
+      <div class="gps-indicator" id="gpsIndicator">
+        <div class="gps-pulse" id="gpsPulse"></div>
+        <span class="gps-accuracy" id="gpsAccuracy">---</span>
+      </div>
+      <button id="infoToggleBtn" class="icon-btn" aria-label="Toggle HLB Info Panel" title="HLB Info">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="8" />
+          <line x1="12" y1="12" x2="12" y2="16" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       MAP
+  ══════════════════════════════════════ -->
+  <main id="map" role="main" aria-label="HLB Survey Map"></main>
+
+  <!-- ══════════════════════════════════════
+       INFO PANEL (top-right collapsible)
+  ══════════════════════════════════════ -->
+  <aside id="infoPanel" class="info-panel" aria-label="HLB Information Panel" aria-hidden="true">
+    <div class="info-panel__header">
+      <span class="info-panel__title">HLB INFORMATION</span>
+      <button id="infoPanelClose" class="icon-btn icon-btn--sm" aria-label="Close Info Panel">✕</button>
+    </div>
+    <div class="info-panel__body">
+      <dl class="info-grid">
+        <dt>State</dt>
+        <dd>Andhra Pradesh</dd>
+
+        <dt>District</dt>
+        <dd>Anakapalli</dd>
+
+        <dt>Sub-District</dt>
+        <dd>Anakapalli</dd>
+
+        <dt>Town</dt>
+        <dd>GVMC</dd>
+
+        <dt>Ward No.</dt>
+        <dd class="mono">0081</dd>
+
+        <dt>HLB No.</dt>
+        <dd class="mono highlight">0050</dd>
+
+        <dt>Center</dt>
+        <dd class="mono">17.685025°N<br>83.010142°E</dd>
+
+        <dt>Charge Officer</dt>
+        <dd>
+          <a href="tel:8340999957" class="call-link" id="chargeOfficerCall">
+            <span class="call-icon">📞</span> 8340999957
+          </a>
+        </dd>
+
+        <dt>Created</dt>
+        <dd class="mono">02-04-2026</dd>
+
+        <dt>Map Generated</dt>
+        <dd class="mono">06-04-2026</dd>
+      </dl>
+
+      <div class="info-panel__coords" id="liveCoords">
+        <span class="coords-label">YOUR POSITION</span>
+        <span class="coords-value mono" id="coordLat">---.------°N</span>
+        <span class="coords-value mono" id="coordLng">---.------°E</span>
+        <span class="coords-value mono small" id="coordAlt">Alt: ---m</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════
+       BOTTOM TOOLBAR
+  ══════════════════════════════════════ -->
+  <nav id="bottomToolbar" class="bottom-toolbar" aria-label="Map Tools">
+    <button id="btnDraw" class="tool-btn tool-btn--primary" aria-label="Draw HLB Boundary" title="Draw Boundary">
+      <span class="tool-btn__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+      </span>
+      <span class="tool-btn__label">Draw</span>
+    </button>
+
+    <button id="btnClose" class="tool-btn" aria-label="Close Polygon" title="Close Polygon" disabled>
+      <span class="tool-btn__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      </span>
+      <span class="tool-btn__label">Close</span>
+    </button>
+
+    <button id="btnSave" class="tool-btn tool-btn--success" aria-label="Save Boundary to Device" title="Save Boundary"
+      disabled>
+      <span class="tool-btn__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
+      </span>
+      <span class="tool-btn__label">Save</span>
+    </button>
+
+    <button id="btnClear" class="tool-btn tool-btn--danger" aria-label="Clear Boundary" title="Clear Boundary">
+      <span class="tool-btn__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+        </svg>
+      </span>
+      <span class="tool-btn__label">Clear</span>
+    </button>
+
+    <button id="btnNavigate" class="tool-btn" aria-label="Center Map on My Location" title="My Location">
+      <span class="tool-btn__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+          <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" opacity="0.3" />
+        </svg>
+      </span>
+      <span class="tool-btn__label">Locate</span>
+    </button>
+
+    <button id="btnLayer" class="tool-btn" aria-label="Toggle Map Layer" title="Toggle Layer">
+      <span class="tool-btn__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2" />
+          <polyline points="2 17 12 22 22 17" />
+          <polyline points="2 12 12 17 22 12" />
+        </svg>
+      </span>
+      <span class="tool-btn__label">Layer</span>
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════ -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <!-- ══════════════════════════════════════
+       GPS DENIED OVERLAY
+  ══════════════════════════════════════ -->
+  <div id="gpsOverlay" class="gps-overlay" hidden>
+    <div class="gps-overlay__card">
+      <div class="gps-overlay__icon">🛰️</div>
+      <h2 class="gps-overlay__title">Location Access Required</h2>
+      <p class="gps-overlay__desc">
+        This tool requires GPS to verify your field position. Please allow location access in your browser settings and
+        reload the page.
+      </p>
+      <ol class="gps-overlay__steps">
+        <li>Tap the <strong>🔒 lock icon</strong> in your browser's address bar</li>
+        <li>Select <strong>Site settings</strong></li>
+        <li>Set <strong>Location → Allow</strong></li>
+        <li>Reload this page</li>
+      </ol>
+      <button onclick="location.reload()" class="gps-overlay__reload">Reload Page</button>
+    </div>
+  </div>
+
+  <!-- Drawing mode indicator -->
+  <div id="drawModeIndicator" class="draw-mode-indicator" hidden>
+    <span class="draw-mode-indicator__dot"></span>
+    <span>DRAWING MODE — Tap map to place vertices · Double-tap to close</span>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet Draw -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
